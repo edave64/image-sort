@@ -1,0 +1,33 @@
+{
+	"$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+	"formatter": {
+		"enabled": true,
+		"formatWithErrors": false,
+		"indentStyle": "tab",
+		"indentWidth": 2,
+		"lineEnding": "lf",
+		"lineWidth": 80,
+		"attributePosition": "auto"
+	},
+	"organizeImports": { "enabled": true },
+	"linter": {
+		"enabled": true,
+		"rules": {
+			"recommended": true,
+			"suspicious": { "noAssignInExpressions": "off" }
+		}
+	},
+	"javascript": {
+		"formatter": {
+			"jsxQuoteStyle": "double",
+			"quoteProperties": "asNeeded",
+			"trailingComma": "es5",
+			"semicolons": "always",
+			"arrowParentheses": "always",
+			"bracketSpacing": true,
+			"bracketSameLine": false,
+			"quoteStyle": "single",
+			"attributePosition": "auto"
+		}
+	}
+}

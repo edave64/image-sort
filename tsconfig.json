@@ -1,0 +1,25 @@
+{
+	"compilerOptions": {
+		"target": "esnext",
+		"module": "esnext",
+		"strict": true,
+		"jsx": "preserve",
+		"importHelpers": true,
+		"moduleResolution": "node",
+		"skipLibCheck": true,
+		"esModuleInterop": true,
+		"allowSyntheticDefaultImports": true,
+		"verbatimModuleSyntax": true,
+		"sourceMap": true,
+		"baseUrl": ".",
+		"alwaysStrict": true,
+		"allowJs": true,
+		"noEmit": true,
+		"paths": {
+			"@/*": ["src/*"]
+		},
+		"lib": ["esnext", "dom", "dom.iterable", "scripthost"]
+	},
+	"include": ["src/**/*.js", "src/**/*.ts"],
+	"exclude": ["node_modules"]
+}
