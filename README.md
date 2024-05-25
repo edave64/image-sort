@@ -2,7 +2,7 @@
 
 Sorts the pixels in an image, for no good reason.
 
-Inspired by [I Tried Sorting Pixels](https://www.youtube.com/watch?v=HMmmBDRy-jE), but doesn't currently do the more interesting effects discussed there.
+Inspired by [I Tried Sorting Pixels](https://www.youtube.com/watch?v=HMmmBDRy-jE) by Acerola, but doesn't currently do the more interesting effects discussed there.
 
 ## Development
 
