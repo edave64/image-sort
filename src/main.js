@@ -1,7 +1,7 @@
 // @ts-check
 /// <reference types="vite/client" />
 
-import { c } from './domHelper';
+import { c } from './domHelper.js';
 
 const UI = {
 	canvas: /** @type {HTMLCanvasElement} */ (/** @type {unknown} */ (null)),
