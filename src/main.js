@@ -15,7 +15,7 @@ const UI = {
 	 *
 	 */
 	init() {
-		UI.initDnD();
+		UI.DND.init();
 		UI.canvas = document.getElementsByTagName('canvas')[0];
 		UI.littleEndian = /** @type {HTMLInputElement|null} */ (
 			document.getElementById('littleEndian')
@@ -30,35 +30,9 @@ const UI = {
 		document.getElementById('exec')?.addEventListener('click', UI.sort);
 	},
 
-	/**
-	 *
-	 */
-	initDnD() {
-		document.addEventListener('drop', (e) => {
-			e.preventDefault();
-
-			if (!e.dataTransfer) return;
-
-			if (e.dataTransfer.items) {
-				for (const item of e.dataTransfer.items) {
-					if (item.kind !== 'file') continue;
-					const file = item.getAsFile();
-					if (!file) continue;
-					UI.loadFile(file);
-					break;
-				}
-			} else {
-				for (const file of e.dataTransfer.files) {
-					if (!file) continue;
-					UI.loadFile(file);
-					break;
-				}
-			}
-		});
-
-		document.addEventListener('dragover', (e) => {
-			e.preventDefault();
-		});
+	dispose() {
+		UI.DND.dispose();
+		document.getElementById('exec')?.removeEventListener('click', UI.sort);
 	},
 
 	/**
@@ -166,10 +140,60 @@ const UI = {
 			}
 		},
 	},
+
+	DND: {
+		init() {
+			document.addEventListener('drop', UI.DND.dropListener);
+			document.addEventListener('dragover', UI.DND.dragOverListener);
+		},
+		dispose() {
+			document.removeEventListener('drop', UI.DND.dropListener);
+			document.removeEventListener('dragover', UI.DND.dragOverListener);
+		},
+		/**
+		 * @param {DragEvent} e
+		 */
+		dropListener(e) {
+			e.preventDefault();
+
+			if (!e.dataTransfer) return;
+
+			if (e.dataTransfer.items) {
+				for (const item of e.dataTransfer.items) {
+					if (item.kind !== 'file') continue;
+					const file = item.getAsFile();
+					if (!file) continue;
+					UI.loadFile(file);
+					break;
+				}
+			} else {
+				for (const file of e.dataTransfer.files) {
+					if (!file) continue;
+					UI.loadFile(file);
+					break;
+				}
+			}
+		},
+		/**
+		 * @param {DragEvent} e
+		 */
+		dragOverListener(e) {
+			e.preventDefault();
+		},
+	},
 };
 
 if (document.readyState === 'complete') {
 	UI.init();
 } else {
 	document.addEventListener('DOMContentLoaded', () => UI.init());
+}
+
+if (import.meta.hot) {
+	import.meta.hot.accept((newModule) => {
+		if (newModule) {
+			// Disconnect old event listeners
+			UI.dispose();
+		}
+	});
 }
