@@ -1,18 +1,49 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <title>Image sorter</title>
-        <script type="module" src="src/main.js"></script>
-        <style>
-            @media (prefers-color-scheme: dark) {
-                body {
-                    background: #222;
-                    color: #fff;
-                }
-            }
-        </style>
-    </head> 
-    <body>
-        <canvas>No canvas support</canvas>
-    </body>
+	<head>
+		<title>Image sorter</title>
+		<script type="module" src="src/main.js"></script>
+		<style>
+			@media (prefers-color-scheme: dark) {
+				body {
+					background: #222;
+					color: #fff;
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<noscript>
+			JS is required for this program to work.
+			<style>
+				body *:not(noscript) {
+					display: hidden;
+				}
+			</style>
+		</noscript>
+		<p>
+			Upload an image, paste it, or drag and drop it
+			<input type="file" value="Upload" />
+		</p>
+		<canvas></canvas>
+		<div class="controls">
+			<p>
+				<input id="littleEndian" type="checkbox" />
+				<label for="littleEndian">Little Endian</label>
+			</p>
+			<p>
+				<input id="descending" type="checkbox" />
+				<label for="descending">Descending</label>
+			</p>
+			<p>
+				<label for="sortDirection">Sort direction</label>
+				<select id="sortDirection">
+					<option value="global">Global</option>
+					<option value="line">By line</option>
+					<option value="column">By column</option>
+				</select>
+			</p>
+			<button id="exec">Sort</button>
+		</div>
+	</body>
 </html>

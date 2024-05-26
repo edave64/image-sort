@@ -1,51 +1,33 @@
 // @ts-check
 /// <reference types="vite/client" />
 
-import { c } from './domHelper.js';
-
 const UI = {
-	canvas: /** @type {HTMLCanvasElement} */ (/** @type {unknown} */ (null)),
-	littleEndian: /** @type {HTMLInputElement} */ (/** @type {unknown} */ (null)),
-	descending: /** @type {HTMLInputElement} */ (/** @type {unknown} */ (null)),
-	sortType: /** @type {HTMLSelectElement} */ (/** @type {unknown} */ (null)),
+	/** @type {HTMLCanvasElement|null} */
+	canvas: null,
+	/** @type {HTMLInputElement|null} */
+	littleEndian: null,
+	/** @type {HTMLInputElement|null} */
+	descending: null,
+	/** @type {HTMLSelectElement|null} */
+	sortDirection: null,
 
 	/**
 	 *
 	 */
 	init() {
 		UI.initDnD();
-		const info = document.createElement('p');
-		info.innerText = 'Drag an image into this document.';
-		document.body.insertBefore(info, document.body.children[0]);
 		UI.canvas = document.getElementsByTagName('canvas')[0];
-
-		document.body.append(
-			c('p', [
-				(UI.littleEndian = c('input', { type: 'checkbox' })),
-				c('label', ['Little endian']),
-			]),
-			c('p', [
-				(UI.descending = c('input', { type: 'checkbox' })),
-				c('label', ['Descending']),
-			]),
-			c('p', [
-				c('label', ['Sort direction']),
-				(UI.sortType = c('select', [
-					c('option', { value: 'global' }, ['Global']),
-					c('option', { value: 'line' }, ['By line']),
-					c('option', { value: 'column' }, ['By column']),
-				])),
-			]),
-			c(
-				'button',
-				{
-					onclick(e) {
-						UI.sort();
-					},
-				},
-				['Sort']
-			)
+		UI.littleEndian = /** @type {HTMLInputElement|null} */ (
+			document.getElementById('littleEndian')
 		);
+		UI.descending = /** @type {HTMLInputElement|null} */ (
+			document.getElementById('descending')
+		);
+		UI.sortDirection = /** @type {HTMLSelectElement|null} */ (
+			document.getElementById('sortDirection')
+		);
+
+		document.getElementById('exec')?.addEventListener('click', UI.sort);
 	},
 
 	/**
@@ -83,17 +65,11 @@ const UI = {
 	 * @param {File} file
 	 */
 	async loadFile(file) {
+		const { canvas, ctx } = UI.getContext();
 		const bitmap = await createImageBitmap(file);
 		try {
-			const canvas = UI.canvas;
 			canvas.height = bitmap.height;
 			canvas.width = bitmap.width;
-
-			const ctx = canvas.getContext('2d');
-
-			if (!ctx) {
-				throw new Error('Could not create painting context');
-			}
 
 			ctx.drawImage(bitmap, 0, 0);
 		} finally {
@@ -103,21 +79,31 @@ const UI = {
 
 	getOptions() {
 		return {
-			littleEndian: this.littleEndian.checked,
-			descending: this.descending.checked,
-			sortType: this.sortType.value,
+			littleEndian: this.littleEndian?.checked ?? false,
+			descending: this.descending?.checked ?? false,
+			sortType: this.sortDirection?.value ?? 'global',
 		};
 	},
 
-	async sort() {
-		const { littleEndian, sortType } = UI.getOptions();
-
+	getContext() {
 		const canvas = UI.canvas;
+
+		if (!canvas) {
+			throw new Error('Canvas is gone?');
+		}
+
 		const ctx = canvas.getContext('2d');
 
 		if (!ctx) {
 			throw new Error('Could not create painting context');
 		}
+
+		return { canvas, ctx };
+	},
+
+	async sort() {
+		const { littleEndian, sortType } = UI.getOptions();
+		const { canvas, ctx } = UI.getContext();
 
 		const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
 		const buffer = imageData.data;
