@@ -1,7 +1,7 @@
 // @ts-check
 /// <reference types="vite/client" />
 
-const UI = {
+export let UI = {
 	/** @type {HTMLCanvasElement|null} */
 	canvas: null,
 	/** @type {HTMLInputElement|null} */
@@ -10,6 +10,9 @@ const UI = {
 	descending: null,
 	/** @type {HTMLSelectElement|null} */
 	sortDirection: null,
+
+	/** @type {ImageBitmap|null} */
+	lastLoadedBitmap: null,
 
 	/**
 	 *
@@ -28,6 +31,7 @@ const UI = {
 		);
 
 		document.getElementById('exec')?.addEventListener('click', UI.sort);
+		document.getElementById('restore')?.addEventListener('click', UI.restore);
 		document.addEventListener('paste', UI.pasteListener);
 		document
 			.getElementById('upload')
@@ -38,6 +42,9 @@ const UI = {
 		UI.DND.dispose();
 		document.removeEventListener('paste', UI.pasteListener);
 		document.getElementById('exec')?.removeEventListener('click', UI.sort);
+		document
+			.getElementById('restore')
+			?.removeEventListener('click', UI.restore);
 		document
 			.getElementById('upload')
 			?.removeEventListener('change', UI.fileUploaderListener);
@@ -74,14 +81,11 @@ const UI = {
 	async loadFile(file) {
 		const { canvas, ctx } = UI.getContext();
 		const bitmap = await createImageBitmap(file);
-		try {
-			canvas.height = bitmap.height;
-			canvas.width = bitmap.width;
+		UI.lastLoadedBitmap = bitmap;
+		canvas.height = bitmap.height;
+		canvas.width = bitmap.width;
 
-			ctx.drawImage(bitmap, 0, 0);
-		} finally {
-			bitmap.close();
-		}
+		ctx.drawImage(bitmap, 0, 0);
 	},
 
 	getOptions() {
@@ -106,6 +110,14 @@ const UI = {
 		}
 
 		return { canvas, ctx };
+	},
+
+	restore() {
+		if (UI.lastLoadedBitmap) {
+			const { ctx, canvas } = UI.getContext();
+			ctx.clearRect(0, 0, canvas.width, canvas.height);
+			ctx.drawImage(UI.lastLoadedBitmap, 0, 0);
+		}
 	},
 
 	async sort() {
@@ -227,6 +239,8 @@ if (import.meta.hot) {
 		if (newModule) {
 			// Disconnect old event listeners
 			UI.dispose();
+			newModule.UI.lastLoadedBitmap = UI.lastLoadedBitmap;
+			UI = newModule.UI;
 		}
 	});
 }
