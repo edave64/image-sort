@@ -29,7 +29,7 @@ const UI = {
 				c('label', ['Descending']),
 			]),
 			c('p', [
-				c('label', ['Sort type']),
+				c('label', ['Sort direction']),
 				(UI.sortType = c('select', [
 					c('option', { value: 'global' }, ['Global']),
 					c('option', { value: 'line' }, ['By line']),
