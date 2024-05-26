@@ -28,11 +28,44 @@ const UI = {
 		);
 
 		document.getElementById('exec')?.addEventListener('click', UI.sort);
+		document.addEventListener('paste', UI.pasteListener);
+		document
+			.getElementById('upload')
+			?.addEventListener('change', UI.fileUploaderListener);
 	},
 
 	dispose() {
 		UI.DND.dispose();
+		document.removeEventListener('paste', UI.pasteListener);
 		document.getElementById('exec')?.removeEventListener('click', UI.sort);
+		document
+			.getElementById('upload')
+			?.removeEventListener('change', UI.fileUploaderListener);
+	},
+
+	/**
+	 * @param {Event} e
+	 */
+	fileUploaderListener(e) {
+		const uploadInput = /** @type {HTMLInputElement|null} */ (
+			document.getElementById('upload')
+		);
+		if (!uploadInput || !uploadInput.files) return;
+		for (const file of uploadInput.files) {
+			UI.loadFile(file);
+		}
+		uploadInput.value = '';
+	},
+
+	/**
+	 * @param {ClipboardEvent} e
+	 */
+	pasteListener(e) {
+		const files = e.clipboardData?.files;
+		if (!files) return;
+		for (const file of files) {
+			UI.loadFile(file);
+		}
 	},
 
 	/**

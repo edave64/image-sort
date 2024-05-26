@@ -22,8 +22,11 @@
 			</style>
 		</noscript>
 		<p>
-			Upload an image, paste it, or drag and drop it
-			<input type="file" value="Upload" />
+			Upload an image, paste it, or drag and drop it<br />
+			<button onclick="document.getElementById('upload').click()">
+				Upload
+			</button>
+			<input type="file" value="Upload" id="upload" hidden />
 		</p>
 		<canvas></canvas>
 		<div class="controls">
