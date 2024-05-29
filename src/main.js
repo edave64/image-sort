@@ -10,6 +10,8 @@ export let UI = {
 	descending: null,
 	/** @type {HTMLSelectElement|null} */
 	sortDirection: null,
+	/** @type {HTMLSelectElement|null} */
+	sortBy: null,
 
 	/** @type {ImageBitmap|null} */
 	lastLoadedBitmap: null,
@@ -18,6 +20,7 @@ export let UI = {
 	 *
 	 */
 	init() {
+		window.UI = UI;
 		UI.DND.init();
 		UI.canvas = document.getElementsByTagName('canvas')[0];
 		UI.littleEndian = /** @type {HTMLInputElement|null} */ (
@@ -28,6 +31,9 @@ export let UI = {
 		);
 		UI.sortDirection = /** @type {HTMLSelectElement|null} */ (
 			document.getElementById('sortDirection')
+		);
+		UI.sortBy = /** @type {HTMLSelectElement|null} */ (
+			document.getElementById('sortBy')
 		);
 
 		document.getElementById('exec')?.addEventListener('click', UI.sort);
@@ -93,6 +99,7 @@ export let UI = {
 			littleEndian: this.littleEndian?.checked ?? false,
 			descending: this.descending?.checked ?? false,
 			sortType: this.sortDirection?.value ?? 'global',
+			sortBy: this.sortBy?.value ?? 'rgba',
 		};
 	},
 
@@ -121,19 +128,33 @@ export let UI = {
 	},
 
 	async sort() {
-		const { littleEndian, sortType } = UI.getOptions();
+		let { sortType, sortBy } = UI.getOptions();
 		const { canvas, ctx } = UI.getContext();
 
 		const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
 		const buffer = imageData.data;
 		const orderBuffer = new Uint32Array(new ArrayBuffer(buffer.byteLength));
 		const origBuffer = new DataView(buffer.buffer);
+		let littleEndian = false;
+
+		if (sortBy === 'abgr') {
+			sortBy = 'rgba';
+			littleEndian = true;
+		}
 
 		for (let i = 0; i < orderBuffer.length; ++i) {
 			orderBuffer[i] = origBuffer.getUint32(i * 4, littleEndian);
 		}
 
-		UI.Sorters[sortType](orderBuffer, canvas.width, canvas.height);
+		const { descending } = UI.getOptions();
+		const sortValue = UI.SortValues[sortBy];
+
+		/** @type {(a: number, b: number) => number} */
+		const comparator = descending
+			? (a, b) => sortValue(b) - sortValue(a)
+			: (a, b) => sortValue(a) - sortValue(b);
+
+		UI.Sorters[sortType](orderBuffer, comparator, canvas.width, canvas.height);
 
 		for (let i = 0; i < orderBuffer.length; ++i) {
 			origBuffer.setUint32(i * 4, orderBuffer[i], littleEndian);
@@ -143,46 +164,100 @@ export let UI = {
 	},
 
 	/**
-	 * @type {Record<string, (data: Uint32Array, width: number, height: number) => void>}
+	 * @type {Record<string, (data: Uint32Array, comparator: (a: number, b: number) => number, width: number, height: number) => void>}
 	 */
 	Sorters: {
-		global(data, width, height) {
-			const { descending } = UI.getOptions();
-			if (descending) {
-				data.sort((a, b) => b - a);
-			} else {
-				data.sort();
-			}
+		global(data, comparator, width, height) {
+			data.sort(comparator);
 		},
-		line(data, width, height) {
-			const { descending } = UI.getOptions();
+		line(data, comparator, width, height) {
 			for (let y = 0; y < height; ++y) {
 				const slice = data.subarray(y * width, (1 + y) * width);
-				if (descending) {
-					slice.sort((a, b) => b - a);
-				} else {
-					slice.sort();
-				}
+				slice.sort(comparator);
 			}
 		},
-		column(data, width, height) {
-			const { descending } = UI.getOptions();
+		column(data, comparator, width, height) {
 			for (let x = 0; x < width; ++x) {
 				const slice = new Uint32Array(height);
 				// collect column
 				for (let y = 0; y < height; ++y) {
 					slice[y] = data[y * width + x];
 				}
-				if (descending) {
-					slice.sort((a, b) => b - a);
-				} else {
-					slice.sort();
-				}
+				slice.sort(comparator);
 				// reinsert sorted
 				for (let y = 0; y < height; ++y) {
 					data[y * width + x] = slice[y];
 				}
 			}
+		},
+	},
+
+	/**
+	 * @type {Record<string, (rgba: number) => number>}
+	 */
+	SortValues: {
+		rgba(rgba) {
+			return rgba;
+		},
+		red(rgba) {
+			return (rgba & 0xff000000) >>> 24;
+		},
+		green(rgba) {
+			return (rgba & 0x00ff0000) >>> 16;
+		},
+		blue(rgba) {
+			return (rgba & 0x0000ff00) >>> 8;
+		},
+		alpha(rgba) {
+			return rgba & 0x000000ff;
+		},
+		hue(rgba) {
+			const r = UI.SortValues.red(rgba);
+			const g = UI.SortValues.green(rgba);
+			const b = UI.SortValues.blue(rgba);
+			const cmin = Math.min(r, g, b);
+			const cmax = Math.max(r, g, b);
+			const delta = cmax - cmin;
+			let h = 0;
+
+			if (delta === 0) {
+				h = 0;
+				// Red is max
+			} else if (cmax === r) {
+				h = ((g - b) / delta) % 6;
+				// Green is max
+			} else if (cmax === g) {
+				h = (b - r) / delta + 2;
+				// Blue is max
+			} else {
+				h = (r - g) / delta + 4;
+			}
+
+			h = Math.round(h * 60);
+
+			// Make negative hues positive behind 360°
+			if (h < 0) h += 360;
+			return h;
+		},
+		saturation(rgba) {
+			const r = UI.SortValues.red(rgba);
+			const g = UI.SortValues.green(rgba);
+			const b = UI.SortValues.blue(rgba);
+			const cmin = Math.min(r, g, b);
+			const cmax = Math.max(r, g, b);
+			const delta = cmax - cmin;
+			const l = (cmax + cmin) / 2;
+			const s = delta === 0 ? 0 : delta / (1 - Math.abs(2 * l - 1));
+			return s;
+		},
+		lightness(rgba) {
+			const r = UI.SortValues.red(rgba);
+			const g = UI.SortValues.green(rgba);
+			const b = UI.SortValues.blue(rgba);
+			const cmin = Math.min(r, g, b);
+			const cmax = Math.max(r, g, b);
+			const l = (cmax + cmin) / 2;
+			return l;
 		},
 	},
 
