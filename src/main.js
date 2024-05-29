@@ -5,8 +5,6 @@ export let UI = {
 	/** @type {HTMLCanvasElement|null} */
 	canvas: null,
 	/** @type {HTMLInputElement|null} */
-	littleEndian: null,
-	/** @type {HTMLInputElement|null} */
 	descending: null,
 	/** @type {HTMLSelectElement|null} */
 	sortDirection: null,
@@ -23,9 +21,6 @@ export let UI = {
 		window.UI = UI;
 		UI.DND.init();
 		UI.canvas = document.getElementsByTagName('canvas')[0];
-		UI.littleEndian = /** @type {HTMLInputElement|null} */ (
-			document.getElementById('littleEndian')
-		);
 		UI.descending = /** @type {HTMLInputElement|null} */ (
 			document.getElementById('descending')
 		);
@@ -96,7 +91,6 @@ export let UI = {
 
 	getOptions() {
 		return {
-			littleEndian: this.littleEndian?.checked ?? false,
 			descending: this.descending?.checked ?? false,
 			sortType: this.sortDirection?.value ?? 'global',
 			sortBy: this.sortBy?.value ?? 'rgba',
